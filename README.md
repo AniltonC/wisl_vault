@@ -121,8 +121,8 @@ Os arquivos enviados ficam salvos na pasta `./uploads` e persistem entre reinici
 
 ```bash
 cd backend
-pip install -r requirements.txt
-UPLOAD_DIR=./uploads uvicorn main:app --reload
+uv sync
+uv run fastapi dev main.py --host 0.0.0.0
 ```
 
 ### Frontend

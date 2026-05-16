@@ -12,7 +12,7 @@ Local-network file storage for testing smartphone uploads. No authentication. Th
 ```bash
 cd backend
 uv sync
-uv run fastapi dev main.py   # hot-reload on :8000
+uv run fastapi dev main.py --host 0.0.0.0   # hot-reload on :8000
 ```
 
 Files are stored in `backend/uploads/` (created automatically).

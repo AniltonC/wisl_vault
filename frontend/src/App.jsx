@@ -1,7 +1,35 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import axios from 'axios'
 
-const API = '/api'
+// Em produção (build nginx) usa proxy relativo; em dev aponta direto para o
+// backend para evitar que o Vite bufferize arquivos grandes na memória.
+const API = import.meta.env.PROD
+  ? '/api'
+  : `http://${window.location.hostname}:8000`
+
+const CHUNK_SIZE = 1 * 1024 * 1024 // 1 MB
+
+const sendLog = (data) => {
+  axios.post(`${API}/debug/log`, { ts: new Date().toISOString(), ...data }).catch(() => {})
+}
+
+function verifyReadable(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve()
+    reader.onerror = () => reject(new Error(
+      `Arquivo ilegível: "${file.name}" não pôde ser lido pelo browser. ` +
+      'Verifique se o arquivo não é esparso (fallocate/truncate) e se o app tem permissão de leitura.'
+    ))
+    reader.readAsArrayBuffer(file.slice(0, 1))
+  })
+}
+
+function randomUUID() {
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  )
+}
 
 function formatSize(bytes) {
   if (bytes === 0) return '0 B'
@@ -54,23 +82,86 @@ export default function App() {
   }, [fetchFiles])
 
   const uploadOne = async (file, current, total) => {
+    await verifyReadable(file)
+
     setProgress(0)
     setLoaded(0)
     setFileSize(file.size)
     setCurrentFile(file.name)
     setQueueInfo({ current, total })
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const fileId = randomUUID()
+    const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE))
+    const uploadStart = Date.now()
 
-    await axios.post(`${API}/upload`, formData, {
-      onUploadProgress: (e) => {
-        setLoaded(e.loaded)
-        // e.total pode ser 0 em browsers mobile (Safari/iOS) quando o
-        // Content-Length não é reportado — usa file.size como fallback
-        const knownTotal = e.total || file.size
-        if (knownTotal) setProgress(Math.round((e.loaded * 100) / knownTotal))
-      },
+    sendLog({
+      event: 'upload_start',
+      session: fileId,
+      file: file.name,
+      file_size: file.size,
+      file_type: file.type || 'unknown',
+      total_chunks: totalChunks,
+      user_agent: navigator.userAgent,
+    })
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE
+      const chunk = file.slice(start, Math.min(start + CHUNK_SIZE, file.size))
+      const chunkStart = Date.now()
+
+      const formData = new FormData()
+      formData.append('file', chunk, file.name)
+      formData.append('file_id', fileId)
+      formData.append('chunk_index', String(i))
+      formData.append('total_chunks', String(totalChunks))
+
+      const MAX_RETRIES = 3
+      let attempt = 0
+      while (true) {
+        try {
+          await axios.post(`${API}/upload`, formData, {
+            onUploadProgress: (e) => {
+              const sent = i * CHUNK_SIZE + (e.loaded || 0)
+              const clamped = Math.min(sent, file.size)
+              setLoaded(clamped)
+              if (file.size > 0) setProgress(Math.round((clamped * 100) / file.size))
+            },
+          })
+          break
+        } catch (err) {
+          attempt++
+          sendLog({
+            event: 'chunk_error',
+            session: fileId,
+            chunk_index: i,
+            total_chunks: totalChunks,
+            duration_ms: Date.now() - chunkStart,
+            attempt,
+            error: err.message,
+            error_code: err.code,
+            http_status: err.response?.status ?? null,
+          })
+          if (attempt >= MAX_RETRIES) throw err
+          await new Promise((r) => setTimeout(r, 1000 * attempt))
+        }
+      }
+
+      sendLog({
+        event: 'chunk_done',
+        session: fileId,
+        chunk_index: i,
+        total_chunks: totalChunks,
+        duration_ms: Date.now() - chunkStart,
+      })
+    }
+
+    sendLog({
+      event: 'upload_done',
+      session: fileId,
+      file: file.name,
+      file_size: file.size,
+      total_chunks: totalChunks,
+      duration_ms: Date.now() - uploadStart,
     })
   }
 
