@@ -49,7 +49,7 @@ O smartphone acessa o site na porta 80. O nginx serve o frontend e encaminha as 
 ### 1. Clonar o repositório
 
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/AniltonC/wisl_upload.git
 cd wisl_upload
 ```
 
