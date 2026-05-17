@@ -153,6 +153,18 @@ header h1 {
   color: #64748b;
 }
 
+.progress-stats {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.progress-stats-sep {
+  opacity: 0.5;
+}
+
 /* Error */
 .error-banner {
   background: #fef2f2;

@@ -7,7 +7,7 @@ const API = import.meta.env.PROD
   ? '/api'
   : `http://${window.location.hostname}:8000`
 
-const CHUNK_SIZE = 1 * 1024 * 1024 // 1 MB
+const CHUNK_SIZE = 2 * 1024 * 1024 // 2 MB
 
 const sendLog = (data) => {
   axios.post(`${API}/debug/log`, { ts: new Date().toISOString(), ...data }).catch(() => {})
@@ -39,6 +39,13 @@ function formatSize(bytes) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
+function formatTime(seconds) {
+  if (!seconds || !isFinite(seconds) || seconds < 0) return '--'
+  if (seconds < 60) return `${Math.round(seconds)}s`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+}
+
 function formatDate(iso) {
   const d = new Date(iso)
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -62,6 +69,8 @@ export default function App() {
   const [progress, setProgress] = useState(0)
   const [loaded, setLoaded] = useState(0)
   const [fileSize, setFileSize] = useState(0)
+  const [speed, setSpeed] = useState(0)
+  const [eta, setEta] = useState(null)
   const [currentFile, setCurrentFile] = useState('')
   const [queueInfo, setQueueInfo] = useState({ current: 0, total: 0 })
   const [dragOver, setDragOver] = useState(false)
@@ -87,6 +96,8 @@ export default function App() {
     setProgress(0)
     setLoaded(0)
     setFileSize(file.size)
+    setSpeed(0)
+    setEta(null)
     setCurrentFile(file.name)
     setQueueInfo({ current, total })
 
@@ -125,6 +136,12 @@ export default function App() {
               const clamped = Math.min(sent, file.size)
               setLoaded(clamped)
               if (file.size > 0) setProgress(Math.round((clamped * 100) / file.size))
+              const elapsed = (Date.now() - uploadStart) / 1000
+              if (elapsed > 0.5 && clamped > 0) {
+                const currentSpeed = clamped / elapsed
+                setSpeed(currentSpeed)
+                setEta((file.size - clamped) / currentSpeed)
+              }
             },
           })
           break
@@ -185,6 +202,8 @@ export default function App() {
       setProgress(0)
       setLoaded(0)
       setFileSize(0)
+      setSpeed(0)
+      setEta(null)
       if (inputRef.current) inputRef.current.value = ''
     }
   }
@@ -250,6 +269,13 @@ export default function App() {
                   </span>
                 )}
               </div>
+              {speed > 0 && (
+                <div className="progress-stats">
+                  <span>{formatSize(speed)}/s</span>
+                  <span className="progress-stats-sep">·</span>
+                  <span>{formatTime(eta)} restantes</span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="upload-idle">

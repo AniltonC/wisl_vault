@@ -2,6 +2,7 @@ import json
 import os
 import re
 import shutil
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import aiofiles
@@ -14,7 +15,39 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 LOG_FILE = os.path.join(os.path.realpath(UPLOAD_DIR), ".debug.jsonl")
 
-app = FastAPI()
+CHUNKS_ROOT = os.path.join(os.path.realpath(UPLOAD_DIR), ".chunks")
+
+def cleanup_uploads():
+    removed_files, removed_chunks = [], 0
+
+    # Remove todos os arquivos enviados (ignora arquivos ocultos como .debug.jsonl)
+    for entry in os.scandir(UPLOAD_DIR):
+        if entry.is_file() and not entry.name.startswith('.'):
+            os.remove(entry.path)
+            removed_files.append(entry.name)
+
+    # Remove todos os chunks pendentes
+    if os.path.isdir(CHUNKS_ROOT):
+        for entry in os.scandir(CHUNKS_ROOT):
+            if entry.is_dir():
+                shutil.rmtree(entry.path, ignore_errors=True)
+                removed_chunks += 1
+
+    if removed_files:
+        print(f"[cleanup] {len(removed_files)} arquivo(s) removido(s): {removed_files}")
+    if removed_chunks:
+        print(f"[cleanup] {removed_chunks} diretório(s) de chunks removido(s)")
+    if not removed_files and not removed_chunks:
+        print("[cleanup] Diretório de uploads já estava vazio.")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    cleanup_uploads()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,8 +96,7 @@ async def upload_file(
     if total_chunks <= 0 or not (0 <= chunk_index < total_chunks):
         raise HTTPException(status_code=400, detail="Invalid chunk parameters")
 
-    chunks_root = os.path.join(os.path.realpath(UPLOAD_DIR), ".chunks")
-    chunk_dir = os.path.join(chunks_root, file_id)
+    chunk_dir = os.path.join(CHUNKS_ROOT, file_id)
     os.makedirs(chunk_dir, exist_ok=True)
 
     chunk_path = os.path.join(chunk_dir, f"{chunk_index:06d}")
