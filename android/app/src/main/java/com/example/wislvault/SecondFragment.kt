@@ -7,9 +7,13 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.wislvault.databinding.FragmentSecondBinding
@@ -45,6 +49,19 @@ class SecondFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val dp16 = (16 * resources.displayMetrics.density).toInt()
+            val dp80 = (80 * resources.displayMetrics.density).toInt()
+            binding.fab.updateLayoutParams<FrameLayout.LayoutParams> {
+                bottomMargin = navBar.bottom + dp16
+                marginEnd = dp16
+            }
+            binding.scrollFiles.setPadding(0, 0, 0, dp80 + navBar.bottom)
+            insets
+        }
+
         binding.fab.setOnClickListener { pickFile.launch(arrayOf("*/*")) }
         binding.tvError.setOnClickListener { binding.tvError.isVisible = false }
         fetchFiles()
