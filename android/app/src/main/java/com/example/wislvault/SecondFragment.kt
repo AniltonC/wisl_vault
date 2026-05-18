@@ -40,6 +40,10 @@ class SecondFragment : Fragment() {
 
     private lateinit var serverUrl: String
 
+    private var isSelectionMode = false
+    private val selectedFiles = mutableSetOf<String>()
+    private var currentFiles = listOf<FileInfo>()
+
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { startUpload(it) }
     }
@@ -71,12 +75,64 @@ class SecondFragment : Fragment() {
 
         binding.fab.setOnClickListener { pickFile.launch(arrayOf("*/*")) }
         binding.tvError.setOnClickListener { binding.tvError.isVisible = false }
+
+        binding.btnCancelSelection.setOnClickListener { exitSelectionMode() }
+        binding.btnDeleteSelected.setOnClickListener { confirmDeleteSelected() }
+        binding.btnDownloadSelected.setOnClickListener { downloadSelected() }
+        binding.btnSelectAll.setOnClickListener { selectAll() }
+
         fetchFiles()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // ── Selection ─────────────────────────────────────────────────────────────
+
+    private fun enterSelectionMode(file: FileInfo) {
+        isSelectionMode = true
+        selectedFiles.clear()
+        selectedFiles.add(file.name)
+        binding.selectionBar.isVisible = true
+        binding.fab.isVisible = false
+        updateItemIcons()
+    }
+
+    private fun exitSelectionMode() {
+        isSelectionMode = false
+        selectedFiles.clear()
+        binding.selectionBar.isVisible = false
+        binding.fab.isVisible = true
+        updateItemIcons()
+    }
+
+    private fun toggleSelection(file: FileInfo) {
+        if (!selectedFiles.remove(file.name)) {
+            selectedFiles.add(file.name)
+        }
+        if (selectedFiles.isEmpty()) exitSelectionMode() else updateItemIcons()
+    }
+
+    private fun selectAll() {
+        selectedFiles.clear()
+        selectedFiles.addAll(currentFiles.map { it.name })
+        updateItemIcons()
+    }
+
+    private fun updateItemIcons() {
+        for (i in 0 until binding.listContainer.childCount) {
+            val child = binding.listContainer.getChildAt(i) ?: continue
+            val name = child.tag as? String ?: continue
+            val btn = child.findViewById<ImageButton>(R.id.btnOptions) ?: continue
+            val iconRes = when {
+                !isSelectionMode -> R.drawable.ic_more_vert
+                selectedFiles.contains(name) -> R.drawable.ic_check_circle
+                else -> R.drawable.ic_radio_button_unchecked
+            }
+            btn.setImageResource(iconRes)
+        }
     }
 
     // ── Network ──────────────────────────────────────────────────────────────
@@ -202,6 +258,44 @@ class SecondFragment : Fragment() {
         }
     }
 
+    private fun deleteSelected() {
+        val toDelete = selectedFiles.toList()
+        exitSelectionMode()
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    toDelete.forEach { name ->
+                        val encoded = URLEncoder.encode(name, "UTF-8")
+                        val conn = URL("$serverUrl/files/$encoded").openConnection() as HttpURLConnection
+                        conn.requestMethod = "DELETE"
+                        conn.connectTimeout = 10_000
+                        conn.readTimeout = 10_000
+                        conn.responseCode
+                    }
+                }
+                fetchFiles()
+            } catch (e: Exception) {
+                showError("Erro ao deletar: ${e.message}")
+            }
+        }
+    }
+
+    private fun downloadSelected() {
+        val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val count = selectedFiles.size
+        selectedFiles.forEach { name ->
+            val encoded = URLEncoder.encode(name, "UTF-8")
+            val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
+                .setTitle(name)
+                .setDescription("Baixando...")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+            dm.enqueue(request)
+        }
+        Toast.makeText(requireContext(), "$count download(s) iniciado(s)", Toast.LENGTH_SHORT).show()
+        exitSelectionMode()
+    }
+
     // ── Options menu ─────────────────────────────────────────────────────────
 
     private fun showOptions(file: FileInfo) {
@@ -255,6 +349,16 @@ class SecondFragment : Fragment() {
             .show()
     }
 
+    private fun confirmDeleteSelected() {
+        val count = selectedFiles.size
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Deletar arquivos")
+            .setMessage("Deletar $count arquivo(s) selecionado(s)?")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Deletar") { _, _ -> deleteSelected() }
+            .show()
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun writeMultipart(
@@ -302,6 +406,7 @@ class SecondFragment : Fragment() {
     }
 
     private fun showFiles(files: List<FileInfo>) {
+        currentFiles = files
         binding.listContainer.removeAllViews()
 
         if (files.isEmpty()) {
@@ -318,9 +423,29 @@ class SecondFragment : Fragment() {
 
         files.forEach { file ->
             val item = layoutInflater.inflate(R.layout.item_file, binding.listContainer, false)
+            item.tag = file.name
             item.findViewById<TextView>(R.id.tvItemName).text = file.name
             item.findViewById<TextView>(R.id.tvItemSize).text = formatSize(file.size)
-            item.findViewById<ImageButton>(R.id.btnOptions).setOnClickListener { showOptions(file) }
+
+            val btn = item.findViewById<ImageButton>(R.id.btnOptions)
+            val iconRes = when {
+                !isSelectionMode -> R.drawable.ic_more_vert
+                selectedFiles.contains(file.name) -> R.drawable.ic_check_circle
+                else -> R.drawable.ic_radio_button_unchecked
+            }
+            btn.setImageResource(iconRes)
+
+            btn.setOnClickListener {
+                if (isSelectionMode) toggleSelection(file) else showOptions(file)
+            }
+            item.setOnClickListener {
+                if (isSelectionMode) toggleSelection(file)
+            }
+            item.setOnLongClickListener {
+                if (!isSelectionMode) enterSelectionMode(file)
+                true
+            }
+
             binding.listContainer.addView(item)
         }
     }

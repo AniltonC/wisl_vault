@@ -11,6 +11,57 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Barra de seleção (oculta por padrão) -->
+        <LinearLayout
+            android:id="@+id/selectionBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone">
+
+            <ImageButton
+                android:id="@+id/btnCancelSelection"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Cancelar seleção"
+                app:srcCompat="@drawable/ic_close" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnDeleteSelected"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Deletar selecionados"
+                app:srcCompat="@drawable/ic_delete" />
+
+            <ImageButton
+                android:id="@+id/btnDownloadSelected"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Baixar selecionados"
+                app:srcCompat="@drawable/ic_download" />
+
+            <ImageButton
+                android:id="@+id/btnSelectAll"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Selecionar todos"
+                app:srcCompat="@drawable/ic_select_all" />
+
+        </LinearLayout>
+
         <!-- Card de progresso do upload (oculto por padrão) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/layoutProgress"
