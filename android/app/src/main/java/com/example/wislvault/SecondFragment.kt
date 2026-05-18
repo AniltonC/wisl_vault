@@ -1,14 +1,19 @@
 package com.example.wislvault
 
+import android.app.DownloadManager
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.OpenableColumns
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,6 +22,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.wislvault.databinding.FragmentSecondBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,6 +30,7 @@ import org.json.JSONArray
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.util.UUID
 
 class SecondFragment : Fragment() {
@@ -176,6 +183,78 @@ class SecondFragment : Fragment() {
         }
     }
 
+    private fun deleteFile(file: FileInfo) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val encoded = URLEncoder.encode(file.name, "UTF-8")
+                    val conn = URL("$serverUrl/files/$encoded").openConnection() as HttpURLConnection
+                    conn.requestMethod = "DELETE"
+                    conn.connectTimeout = 10_000
+                    conn.readTimeout = 10_000
+                    val code = conn.responseCode
+                    if (code !in 200..299) throw Exception("HTTP $code")
+                }
+                fetchFiles()
+            } catch (e: Exception) {
+                showError("Erro ao deletar: ${e.message}")
+            }
+        }
+    }
+
+    // ── Options menu ─────────────────────────────────────────────────────────
+
+    private fun showOptions(file: FileInfo) {
+        val options = arrayOf("Baixar", "Ver Informações", "Deletar")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(file.name)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> downloadFile(file)
+                    1 -> showInfo(file)
+                    2 -> confirmDelete(file)
+                }
+            }
+            .show()
+    }
+
+    private fun downloadFile(file: FileInfo) {
+        val encoded = URLEncoder.encode(file.name, "UTF-8")
+        val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
+            .setTitle(file.name)
+            .setDescription("Baixando...")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, file.name)
+        val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        dm.enqueue(request)
+        Toast.makeText(requireContext(), "Download iniciado", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showInfo(file: FileInfo) {
+        val ext = file.name.substringAfterLast('.', "").uppercase().ifEmpty { "—" }
+        val date = runCatching {
+            val parser = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+            val formatter = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale("pt", "BR"))
+            formatter.format(parser.parse(file.modified)!!)
+        }.getOrElse { file.modified }
+
+        val msg = "Nome: ${file.name}\nTipo: $ext\nTamanho: ${formatSize(file.size)}\nData do upload: $date"
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Informações")
+            .setMessage(msg)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun confirmDelete(file: FileInfo) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Deletar arquivo")
+            .setMessage("Tem certeza que deseja deletar \"${file.name}\"?")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Deletar") { _, _ -> deleteFile(file) }
+            .show()
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun writeMultipart(
@@ -218,7 +297,7 @@ class SecondFragment : Fragment() {
         val arr = JSONArray(json)
         return (0 until arr.length()).map {
             val obj = arr.getJSONObject(it)
-            FileInfo(obj.getString("name"), obj.optLong("size", 0))
+            FileInfo(obj.getString("name"), obj.optLong("size", 0), obj.optString("modified", ""))
         }
     }
 
@@ -241,6 +320,7 @@ class SecondFragment : Fragment() {
             val item = layoutInflater.inflate(R.layout.item_file, binding.listContainer, false)
             item.findViewById<TextView>(R.id.tvItemName).text = file.name
             item.findViewById<TextView>(R.id.tvItemSize).text = formatSize(file.size)
+            item.findViewById<ImageButton>(R.id.btnOptions).setOnClickListener { showOptions(file) }
             binding.listContainer.addView(item)
         }
     }
@@ -264,5 +344,5 @@ class SecondFragment : Fragment() {
         return "${seconds / 3600}h ${(seconds % 3600) / 60}m"
     }
 
-    data class FileInfo(val name: String, val size: Long)
+    data class FileInfo(val name: String, val size: Long, val modified: String)
 }
