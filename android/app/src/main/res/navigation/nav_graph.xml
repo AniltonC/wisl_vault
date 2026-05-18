@@ -3,22 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/ConectionActivity">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.wislvault.FirstFragment"
+        android:id="@+id/ConectionActivity"
+        android:name="com.example.wislvault.ConectionActivity"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_first">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_ConectionActivity_to_VaultActivity"
+            app:destination="@id/VaultActivity" />
     </fragment>
 
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.example.wislvault.SecondFragment"
+        android:id="@+id/VaultActivity"
+        android:name="com.example.wislvault.VaultActivity"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_second">
 

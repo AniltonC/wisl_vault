@@ -40,7 +40,7 @@ import java.net.URLEncoder
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
-class SecondFragment : Fragment() {
+class VaultActivity : Fragment() {
 
     private var _binding: FragmentSecondBinding? = null
     private val binding get() = _binding!!

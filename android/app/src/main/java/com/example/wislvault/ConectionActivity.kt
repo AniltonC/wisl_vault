@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 
-class FirstFragment : Fragment() {
+class ConectionActivity : Fragment() {
 
     private var _binding: FragmentFirstBinding? = null
     private val binding get() = _binding!!
@@ -55,7 +55,7 @@ class FirstFragment : Fragment() {
                     if (code != 200) throw Exception("HTTP $code")
                 }
                 findNavController().navigate(
-                    R.id.action_FirstFragment_to_SecondFragment,
+                    R.id.action_ConectionActivity_to_VaultActivity,
                     bundleOf("serverUrl" to url)
                 )
             } catch (e: Exception) {
