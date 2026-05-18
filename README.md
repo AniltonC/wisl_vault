@@ -1,14 +1,26 @@
-# File Storage
+# WiSL Vault
 
-Aplicação web simples para armazenamento e upload de arquivos, projetada para testes de upload em smartphones na rede local. Funciona como um Google Drive pessoal, sem autenticação, executando inteiramente em containers Docker.
+Armazenamento local de arquivos para testes de upload em smartphones na rede Wi-Fi. Funciona como um drive pessoal sem autenticação — o computador roda o servidor e os dispositivos na mesma rede acessam por IP.
+
+Inclui um **app Android nativo** (WiSL Vault) e uma **interface web** responsiva.
 
 ## Funcionalidades
 
-- Upload de arquivos via toque (mobile) ou drag & drop (desktop)
+### App Android (WiSL Vault)
+- Conexão ao servidor pelo IP local
+- Upload de arquivos via seletor do sistema
+- Listagem de arquivos com nome, tamanho e data de upload
+- Menu de opções por arquivo: download, informações, exclusão
+- Seleção múltipla com long-press: download ou exclusão em lote
+- Download com notificação em tempo real (nome, progresso, velocidade e ETA)
+- Interface em inglês ou pt-BR conforme o idioma do dispositivo
+
+### Interface Web
+- Upload via toque (mobile) ou drag & drop (desktop)
 - Seleção múltipla de arquivos com envio sequencial
 - Barra de progresso em tempo real com percentual
-- Listagem de arquivos com nome, tamanho e data de modificação
-- Download e exclusão de arquivos individuais
+- Listagem com nome, tamanho e data
+- Download e exclusão de arquivos
 - Interface responsiva, otimizada para smartphones
 
 ## Arquitetura
@@ -19,92 +31,112 @@ wisl_upload/
 ├── uploads/                  # Arquivos armazenados (criado automaticamente)
 ├── backend/                  # API FastAPI
 │   ├── Dockerfile
-│   ├── requirements.txt
+│   ├── pyproject.toml
 │   └── main.py
-└── frontend/                 # Interface React (servida via nginx)
-    ├── Dockerfile
-    ├── nginx.conf
-    ├── vite.config.js
-    └── src/
-        ├── App.jsx
-        └── index.css
+├── frontend/                 # Interface React (servida via nginx)
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx
+│       └── index.css
+└── android/                  # App Android nativo (Kotlin)
+    └── app/src/main/
+        ├── AndroidManifest.xml
+        └── java/com/example/wislvault/
+            ├── MainActivity.kt
+            ├── ConectionActivity.kt   # tela de conexão
+            └── VaultActivity.kt       # listagem e upload
 ```
 
-| Camada   | Tecnologia     | Papel                                              |
-|----------|----------------|----------------------------------------------------|
-| Frontend | React + Vite   | Interface de usuário                               |
-| Proxy    | nginx          | Serve o React e repassa `/api/*` para o backend    |
-| Backend  | FastAPI        | Upload, listagem, download e exclusão de arquivos  |
-| Storage  | Volume Docker  | Pasta `./uploads` persistida no host               |
+| Camada   | Tecnologia       | Papel                                              |
+|----------|------------------|----------------------------------------------------|
+| Frontend | React + Vite     | Interface web de usuário                           |
+| Proxy    | nginx            | Serve o React e repassa `/api/*` para o backend    |
+| Backend  | FastAPI          | Upload, listagem, download e exclusão de arquivos  |
+| Storage  | Volume Docker    | Pasta `./uploads` persistida no host               |
+| Android  | Kotlin + Material3 | App nativo para Android 15+                      |
 
-O smartphone acessa o site na porta 80. O nginx serve o frontend e encaminha as chamadas `/api/` internamente para o FastAPI — sem necessidade de IP hardcoded no código.
+O smartphone acessa a porta 80 pelo IP local. O nginx serve o frontend e encaminha `/api/*` internamente para o FastAPI — sem IP hardcoded no código.
 
 ## Pré-requisitos
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+### Servidor
+- [Docker](https://docs.docker.com/get-docker/) e [Docker Compose](https://docs.docker.com/compose/install/)
+- Ou: Python 3.12+ com [uv](https://docs.astral.sh/uv/) e Node 20+
 
-## Como executar
+### App Android
+- Android Studio (para compilar)
+- Android 15+ (minSdk 35)
 
-### 1. Clonar o repositório
+## Como executar o servidor
+
+### Com Docker (recomendado)
 
 ```bash
 git clone https://github.com/AniltonC/wisl_upload.git
 cd wisl_upload
-```
-
-### 2. Subir os containers
-
-```bash
 docker compose up --build
 ```
 
-O build do frontend (instalação de dependências + compilação) ocorre na primeira execução e leva alguns minutos. Nas execuções seguintes, use apenas:
+O build do frontend ocorre na primeira execução. Nas seguintes, use apenas:
 
 ```bash
 docker compose up
 ```
 
-### 3. Acessar pelo computador
+Acesse pelo computador em `http://localhost` ou pelo smartphone em `http://<IP-do-computador>`.
 
-Abra o navegador em:
+### Sem Docker (desenvolvimento)
 
+**Backend:**
+```bash
+cd backend
+uv sync
+uv run fastapi dev main.py --host 0.0.0.0   # hot-reload em :8000
 ```
-http://localhost
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev   # Vite em :5173
 ```
 
-### 4. Acessar pelo smartphone
+O `vite.config.js` faz proxy de `/api` para `http://localhost:8000` e expõe o servidor na rede local (`host: '0.0.0.0'`). O terminal imprime a URL de rede para compartilhar com o smartphone.
 
-O smartphone precisa estar conectado na **mesma rede Wi-Fi** que o computador.
-
-Descubra o IP local do computador:
+### Parar os containers
 
 ```bash
-# Linux / macOS
+docker compose down
+```
+
+Os arquivos em `./uploads` persistem entre reinicializações.
+
+## Como descobrir o IP local do computador
+
+```bash
+# Linux
 ip route get 1 | awk '{print $7; exit}'
 
-# macOS (alternativo)
+# macOS
 ipconfig getifaddr en0
 
 # Windows
 ipconfig
 ```
 
-No smartphone, acesse:
+No smartphone (web ou app Android), use `http://<IP>` ou `http://<IP>/api`.
 
-```
-http://<IP-do-computador>
-```
+## App Android
 
-Exemplo: `http://192.168.1.42`
+O app está no diretório `android/`. Abra-o no Android Studio, conecte um dispositivo com Android 15 ou superior e execute via Run.
 
-## Parar os containers
+Na tela inicial, informe o endereço do servidor no formato `http://192.168.x.x/api` e toque em **Connect**.
 
-```bash
-docker compose down
-```
-
-Os arquivos enviados ficam salvos na pasta `./uploads` e persistem entre reinicializações.
+**Permissões solicitadas:**
+- `INTERNET` — comunicação com o servidor
+- `POST_NOTIFICATIONS` — notificações de progresso de download
 
 ## Endpoints da API
 
@@ -114,23 +146,3 @@ Os arquivos enviados ficam salvos na pasta `./uploads` e persistem entre reinici
 | `POST`   | `/upload`             | Envia um arquivo            |
 | `GET`    | `/files/{filename}`   | Faz download de um arquivo  |
 | `DELETE` | `/files/{filename}`   | Exclui um arquivo           |
-
-## Desenvolvimento local (sem Docker)
-
-### Backend
-
-```bash
-cd backend
-uv sync
-uv run fastapi dev main.py --host 0.0.0.0
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-O `vite.config.js` já está configurado para fazer proxy de `/api` para `http://localhost:8000`, então o frontend em modo dev funciona sem alterar nenhuma URL.
