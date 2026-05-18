@@ -150,7 +150,7 @@ class SecondFragment : Fragment() {
                 }
                 showFiles(files)
             } catch (e: Exception) {
-                showError("Erro ao listar arquivos: ${e.message}")
+                showError(getString(R.string.error_list_files, e.message))
             }
         }
     }
@@ -229,7 +229,7 @@ class SecondFragment : Fragment() {
                 }
                 fetchFiles()
             } catch (e: Exception) {
-                showError("Erro no upload: ${e.message}")
+                showError(getString(R.string.error_upload, e.message))
             } finally {
                 if (_binding != null) {
                     binding.layoutProgress.isVisible = false
@@ -253,7 +253,7 @@ class SecondFragment : Fragment() {
                 }
                 fetchFiles()
             } catch (e: Exception) {
-                showError("Erro ao deletar: ${e.message}")
+                showError(getString(R.string.error_delete, e.message))
             }
         }
     }
@@ -275,7 +275,7 @@ class SecondFragment : Fragment() {
                 }
                 fetchFiles()
             } catch (e: Exception) {
-                showError("Erro ao deletar: ${e.message}")
+                showError(getString(R.string.error_delete, e.message))
             }
         }
     }
@@ -287,19 +287,19 @@ class SecondFragment : Fragment() {
             val encoded = URLEncoder.encode(name, "UTF-8")
             val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
                 .setTitle(name)
-                .setDescription("Baixando...")
+                .setDescription(getString(R.string.downloading))
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
             dm.enqueue(request)
         }
-        Toast.makeText(requireContext(), "$count download(s) iniciado(s)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), getString(R.string.downloads_started, count), Toast.LENGTH_SHORT).show()
         exitSelectionMode()
     }
 
     // ── Options menu ─────────────────────────────────────────────────────────
 
     private fun showOptions(file: FileInfo) {
-        val options = arrayOf("Baixar", "Ver Informações", "Deletar")
+        val options = arrayOf(getString(R.string.option_download), getString(R.string.option_info), getString(R.string.option_delete))
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(file.name)
             .setItems(options) { _, which ->
@@ -316,12 +316,12 @@ class SecondFragment : Fragment() {
         val encoded = URLEncoder.encode(file.name, "UTF-8")
         val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
             .setTitle(file.name)
-            .setDescription("Baixando...")
+            .setDescription(getString(R.string.downloading))
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, file.name)
         val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         dm.enqueue(request)
-        Toast.makeText(requireContext(), "Download iniciado", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), getString(R.string.download_started), Toast.LENGTH_SHORT).show()
     }
 
     private fun showInfo(file: FileInfo) {
@@ -332,30 +332,30 @@ class SecondFragment : Fragment() {
             formatter.format(parser.parse(file.modified)!!)
         }.getOrElse { file.modified }
 
-        val msg = "Nome: ${file.name}\nTipo: $ext\nTamanho: ${formatSize(file.size)}\nData do upload: $date"
+        val msg = "${getString(R.string.info_name)}: ${file.name}\n${getString(R.string.info_type)}: $ext\n${getString(R.string.info_size)}: ${formatSize(file.size)}\n${getString(R.string.info_date)}: $date"
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Informações")
+            .setTitle(R.string.dialog_info_title)
             .setMessage(msg)
-            .setPositiveButton("OK", null)
+            .setPositiveButton(android.R.string.ok, null)
             .show()
     }
 
     private fun confirmDelete(file: FileInfo) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Deletar arquivo")
-            .setMessage("Tem certeza que deseja deletar \"${file.name}\"?")
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Deletar") { _, _ -> deleteFile(file) }
+            .setTitle(R.string.dialog_delete_title)
+            .setMessage(getString(R.string.dialog_delete_confirm, file.name))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.btn_delete) { _, _ -> deleteFile(file) }
             .show()
     }
 
     private fun confirmDeleteSelected() {
         val count = selectedFiles.size
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Deletar arquivos")
-            .setMessage("Deletar $count arquivo(s) selecionado(s)?")
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Deletar") { _, _ -> deleteSelected() }
+            .setTitle(R.string.dialog_delete_selected_title)
+            .setMessage(getString(R.string.dialog_delete_selected_confirm, count))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.btn_delete) { _, _ -> deleteSelected() }
             .show()
     }
 
@@ -411,7 +411,7 @@ class SecondFragment : Fragment() {
 
         if (files.isEmpty()) {
             val tv = TextView(requireContext()).apply {
-                text = "Nenhum arquivo no servidor."
+                text = getString(R.string.no_files)
                 setTextColor(0xFF94A3B8.toInt())
                 textSize = 14f
                 gravity = Gravity.CENTER

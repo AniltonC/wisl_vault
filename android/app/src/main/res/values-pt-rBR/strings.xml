@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">WiSL Vault</string>
+    <string name="app_subtitle">Armazenamento local de arquivos</string>
+
+    <string name="server_address_label">Endereço do servidor</string>
+    <string name="btn_connect">Conectar</string>
+    <string name="btn_delete">Deletar</string>
+
+    <string name="error_connect">Não foi possível conectar: %s</string>
+    <string name="no_files">Nenhum arquivo no servidor.</string>
+    <string name="error_list_files">Erro ao listar arquivos: %s</string>
+    <string name="error_upload">Erro no upload: %s</string>
+    <string name="error_delete">Erro ao deletar: %s</string>
+
+    <string name="downloading">Baixando…</string>
+    <string name="download_started">Download iniciado</string>
+    <string name="downloads_started">%d download(s) iniciado(s)</string>
+
+    <string name="option_download">Baixar</string>
+    <string name="option_info">Ver Informações</string>
+    <string name="option_delete">Deletar</string>
+
+    <string name="dialog_info_title">Informações</string>
+    <string name="info_name">Nome</string>
+    <string name="info_type">Tipo</string>
+    <string name="info_size">Tamanho</string>
+    <string name="info_date">Data do upload</string>
+
+    <string name="dialog_delete_title">Deletar arquivo</string>
+    <string name="dialog_delete_confirm">Tem certeza que deseja deletar \"%s\"?</string>
+    <string name="dialog_delete_selected_title">Deletar arquivos</string>
+    <string name="dialog_delete_selected_confirm">Deletar %d arquivo(s) selecionado(s)?</string>
+
+    <string name="cd_cancel_selection">Cancelar seleção</string>
+    <string name="cd_delete_selected">Deletar selecionados</string>
+    <string name="cd_download_selected">Baixar selecionados</string>
+    <string name="cd_select_all">Selecionar todos</string>
+    <string name="cd_send_file">Enviar arquivo</string>
+    <string name="cd_options">Opções</string>
+</resources>

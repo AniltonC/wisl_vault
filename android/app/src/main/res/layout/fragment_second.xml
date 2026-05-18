@@ -26,7 +26,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Cancelar seleção"
+                android:contentDescription="@string/cd_cancel_selection"
                 app:srcCompat="@drawable/ic_close" />
 
             <View
@@ -39,7 +39,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Deletar selecionados"
+                android:contentDescription="@string/cd_delete_selected"
                 app:srcCompat="@drawable/ic_delete" />
 
             <ImageButton
@@ -48,7 +48,7 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Baixar selecionados"
+                android:contentDescription="@string/cd_download_selected"
                 app:srcCompat="@drawable/ic_download" />
 
             <ImageButton
@@ -57,7 +57,7 @@
                 android:layout_height="40dp"
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Selecionar todos"
+                android:contentDescription="@string/cd_select_all"
                 app:srcCompat="@drawable/ic_select_all" />
 
         </LinearLayout>
@@ -171,7 +171,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:contentDescription="Enviar arquivo"
+        android:contentDescription="@string/cd_send_file"
         app:srcCompat="@drawable/ic_add" />
 
 </FrameLayout>

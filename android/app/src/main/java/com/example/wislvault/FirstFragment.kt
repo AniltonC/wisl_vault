@@ -59,7 +59,7 @@ class FirstFragment : Fragment() {
                     bundleOf("serverUrl" to url)
                 )
             } catch (e: Exception) {
-                binding.tvError.text = "Não foi possível conectar: ${e.message}"
+                binding.tvError.text = getString(R.string.error_connect, e.message)
                 binding.tvError.isVisible = true
             } finally {
                 if (_binding != null) {

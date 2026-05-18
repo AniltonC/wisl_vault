@@ -25,19 +25,19 @@
                 android:id="@+id/tvItemName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
+                android:ellipsize="end"
                 android:fontFamily="sans-serif-medium"
-                android:textColor="#1e293b"
                 android:maxLines="1"
-                android:ellipsize="end" />
+                android:textColor="#1e293b"
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/tvItemSize"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:layout_marginTop="3dp"
                 android:textColor="#94a3b8"
-                android:layout_marginTop="3dp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -47,7 +47,7 @@
             android:layout_height="36dp"
             android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Opções"
+            android:contentDescription="@string/cd_options"
             app:srcCompat="@drawable/ic_more_vert" />
 
     </LinearLayout>
