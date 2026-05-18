@@ -56,21 +56,21 @@
                     android:layout_marginBottom="10dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    android:orientation="horizontal">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/editServerUrl"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textUri"
                         android:imeOptions="actionDone"
+                        android:inputType="textUri"
                         android:singleLine="true"
-                        android:text="http://192.168.1."
-                        android:textSize="15sp"
-                        android:hint="@string/server_url_hint" />
+                        android:text="@string/server_url_hint"
+                        android:textSize="15sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

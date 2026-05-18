@@ -4,7 +4,7 @@
     <string name="app_subtitle">Local file storage</string>
 
     <string name="server_address_label">Server address</string>
-    <string name="server_url_hint" translatable="false">http://192.168.x.x:8000</string>
+    <string name="server_url_hint" translatable="false">http://192.168.x.x/api</string>
     <string name="btn_connect">Connect</string>
     <string name="btn_delete">Delete</string>
 
@@ -32,6 +32,12 @@
     <string name="dialog_delete_confirm">Are you sure you want to delete \"%s\"?</string>
     <string name="dialog_delete_selected_title">Delete files</string>
     <string name="dialog_delete_selected_confirm">Delete %d selected file(s)?</string>
+
+    <string name="notif_channel_name">Downloads</string>
+    <string name="download_initiated">Download started. See details in the notification.</string>
+    <string name="download_complete">Download complete</string>
+    <string name="error_download">Download error: %s</string>
+    <string name="time_remaining">remaining</string>
 
     <string name="cd_cancel_selection">Cancel selection</string>
     <string name="cd_delete_selected">Delete selected</string>

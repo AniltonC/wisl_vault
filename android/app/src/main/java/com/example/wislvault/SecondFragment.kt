@@ -1,10 +1,14 @@
 package com.example.wislvault
 
-import android.app.DownloadManager
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -15,6 +19,8 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -32,6 +38,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 
 class SecondFragment : Fragment() {
 
@@ -47,6 +54,10 @@ class SecondFragment : Fragment() {
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { startUpload(it) }
     }
+
+    private val requestNotifPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* notification will appear if granted */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,12 +92,37 @@ class SecondFragment : Fragment() {
         binding.btnDownloadSelected.setOnClickListener { downloadSelected() }
         binding.btnSelectAll.setOnClickListener { selectAll() }
 
+        ensureNotifChannel()
+        ensureNotifPermission()
         fetchFiles()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+
+    private fun ensureNotifChannel() {
+        val nm = requireContext().getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(NOTIF_CHANNEL_ID) == null) {
+            val channel = NotificationChannel(
+                NOTIF_CHANNEL_ID,
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            )
+            nm.createNotificationChannel(channel)
+        }
+    }
+
+    private fun ensureNotifPermission() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(), Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     // ── Selection ─────────────────────────────────────────────────────────────
@@ -280,20 +316,107 @@ class SecondFragment : Fragment() {
         }
     }
 
-    private fun downloadSelected() {
-        val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val count = selectedFiles.size
-        selectedFiles.forEach { name ->
-            val encoded = URLEncoder.encode(name, "UTF-8")
-            val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
-                .setTitle(name)
-                .setDescription(getString(R.string.downloading))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
-            dm.enqueue(request)
+    // ── Download ──────────────────────────────────────────────────────────────
+
+    private fun downloadFile(file: FileInfo) {
+        val notifId = notifIdCounter.getAndIncrement()
+        val nm = requireContext().getSystemService(NotificationManager::class.java)
+        val ctx = requireContext()
+        val strRemaining = getString(R.string.time_remaining)
+        val strComplete = getString(R.string.download_complete)
+        val strError = getString(R.string.error_download)
+
+        Toast.makeText(requireContext(), getString(R.string.download_initiated), Toast.LENGTH_LONG).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val encoded = URLEncoder.encode(file.name, "UTF-8")
+            val conn = URL("$serverUrl/files/$encoded").openConnection() as HttpURLConnection
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 3_600_000
+
+            var mediaUri: Uri? = null
+
+            try {
+                conn.connect()
+                if (conn.responseCode != 200) throw Exception("HTTP ${conn.responseCode}")
+
+                val totalBytes = conn.contentLengthLong
+                val mimeType = conn.contentType ?: "application/octet-stream"
+
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, file.name)
+                    put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+                mediaUri = ctx.contentResolver.insert(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI, values
+                ) ?: throw Exception("Cannot create file in Downloads")
+
+                val startTime = System.currentTimeMillis()
+                var downloaded = 0L
+                var lastUpdate = 0L
+
+                val builder = NotificationCompat.Builder(ctx, NOTIF_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_download)
+                    .setContentTitle(file.name)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setSilent(true)
+
+                conn.inputStream.use { input ->
+                    ctx.contentResolver.openOutputStream(mediaUri!!)!!.use { output ->
+                        val buf = ByteArray(256 * 1024)
+                        var read: Int
+                        while (input.read(buf).also { read = it } != -1) {
+                            output.write(buf, 0, read)
+                            downloaded += read
+
+                            val now = System.currentTimeMillis()
+                            if (now - lastUpdate >= 200) {
+                                lastUpdate = now
+                                val elapsed = (now - startTime) / 1000.0
+                                val speed = if (elapsed > 0.5 && downloaded > 0) downloaded / elapsed else 0.0
+                                val eta = if (speed > 0 && totalBytes > 0) ((totalBytes - downloaded) / speed).toLong() else null
+                                val pct = if (totalBytes > 0) ((downloaded.toDouble() / totalBytes) * 100).toInt() else 0
+
+                                val text = buildString {
+                                    append(formatSize(downloaded))
+                                    if (totalBytes > 0) append(" / ${formatSize(totalBytes)}")
+                                    if (speed > 0) append(" • ${formatSize(speed.toLong())}/s")
+                                    if (eta != null) append(" • ${formatTime(eta)} $strRemaining")
+                                }
+
+                                builder.setContentText(text).setProgress(100, pct, totalBytes <= 0)
+                                nm.notify(notifId, builder.build())
+                            }
+                        }
+                    }
+                }
+
+                val doneValues = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+                ctx.contentResolver.update(mediaUri!!, doneValues, null, null)
+
+                nm.notify(notifId, NotificationCompat.Builder(ctx, NOTIF_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_download)
+                    .setContentTitle(file.name)
+                    .setContentText(strComplete)
+                    .setAutoCancel(true)
+                    .build())
+
+            } catch (e: Exception) {
+                mediaUri?.let { ctx.contentResolver.delete(it, null, null) }
+                nm.cancel(notifId)
+                withContext(Dispatchers.Main) {
+                    if (_binding != null) showError(String.format(strError, e.message))
+                }
+            }
         }
-        Toast.makeText(requireContext(), getString(R.string.downloads_started, count), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun downloadSelected() {
+        val toDownload = selectedFiles.mapNotNull { name -> currentFiles.find { it.name == name } }
         exitSelectionMode()
+        toDownload.forEach { downloadFile(it) }
     }
 
     // ── Options menu ─────────────────────────────────────────────────────────
@@ -312,23 +435,11 @@ class SecondFragment : Fragment() {
             .show()
     }
 
-    private fun downloadFile(file: FileInfo) {
-        val encoded = URLEncoder.encode(file.name, "UTF-8")
-        val request = DownloadManager.Request(Uri.parse("$serverUrl/files/$encoded"))
-            .setTitle(file.name)
-            .setDescription(getString(R.string.downloading))
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, file.name)
-        val dm = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        dm.enqueue(request)
-        Toast.makeText(requireContext(), getString(R.string.download_started), Toast.LENGTH_SHORT).show()
-    }
-
     private fun showInfo(file: FileInfo) {
         val ext = file.name.substringAfterLast('.', "").uppercase().ifEmpty { "—" }
         val date = runCatching {
             val parser = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
-            val formatter = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale("pt", "BR"))
+            val formatter = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.forLanguageTag("pt-BR"))
             formatter.format(parser.parse(file.modified)!!)
         }.getOrElse { file.modified }
 
@@ -470,4 +581,9 @@ class SecondFragment : Fragment() {
     }
 
     data class FileInfo(val name: String, val size: Long, val modified: String)
+
+    companion object {
+        private const val NOTIF_CHANNEL_ID = "wisl_downloads"
+        private val notifIdCounter = AtomicInteger(1000)
+    }
 }

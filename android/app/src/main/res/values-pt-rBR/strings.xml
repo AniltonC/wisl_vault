@@ -31,6 +31,12 @@
     <string name="dialog_delete_selected_title">Deletar arquivos</string>
     <string name="dialog_delete_selected_confirm">Deletar %d arquivo(s) selecionado(s)?</string>
 
+    <string name="notif_channel_name">Downloads</string>
+    <string name="download_initiated">Download iniciado. Veja os detalhes na notificação.</string>
+    <string name="download_complete">Download concluído</string>
+    <string name="error_download">Erro no download: %s</string>
+    <string name="time_remaining">restantes</string>
+
     <string name="cd_cancel_selection">Cancelar seleção</string>
     <string name="cd_delete_selected">Deletar selecionados</string>
     <string name="cd_download_selected">Baixar selecionados</string>
