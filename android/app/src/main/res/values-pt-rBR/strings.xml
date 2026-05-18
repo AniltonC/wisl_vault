@@ -1,20 +1,21 @@
-<resources>
-    <string name="app_name">WiSL Vault</string>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
+    tools:ignore="CommentRequired">
     <string name="app_subtitle">Armazenamento local de arquivos</string>
 
     <string name="server_address_label">Endereço do servidor</string>
     <string name="btn_connect">Conectar</string>
     <string name="btn_delete">Deletar</string>
 
-    <string name="error_connect">Não foi possível conectar: %s</string>
+    <string name="error_connect">Não foi possível conectar: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
     <string name="no_files">Nenhum arquivo no servidor.</string>
-    <string name="error_list_files">Erro ao listar arquivos: %s</string>
-    <string name="error_upload">Erro no upload: %s</string>
-    <string name="error_delete">Erro ao deletar: %s</string>
+    <string name="error_list_files">Erro ao listar arquivos: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
+    <string name="error_upload">Erro no upload: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
+    <string name="error_delete">Erro ao deletar: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
 
     <string name="downloading">Baixando…</string>
     <string name="download_started">Download iniciado</string>
-    <string name="downloads_started">%d download(s) iniciado(s)</string>
+    <string name="downloads_started"><xliff:g id="count" example="3">%d</xliff:g> download(s) iniciado(s)</string>
 
     <string name="option_download">Baixar</string>
     <string name="option_info">Ver Informações</string>
@@ -27,14 +28,14 @@
     <string name="info_date">Data do upload</string>
 
     <string name="dialog_delete_title">Deletar arquivo</string>
-    <string name="dialog_delete_confirm">Tem certeza que deseja deletar \"%s\"?</string>
+    <string name="dialog_delete_confirm">Tem certeza que deseja deletar \"<xliff:g id="file_name" example="foto.jpg">%s</xliff:g>\"?</string>
     <string name="dialog_delete_selected_title">Deletar arquivos</string>
-    <string name="dialog_delete_selected_confirm">Deletar %d arquivo(s) selecionado(s)?</string>
+    <string name="dialog_delete_selected_confirm">Deletar <xliff:g id="count" example="3">%d</xliff:g> arquivo(s) selecionado(s)?</string>
 
     <string name="notif_channel_name">Downloads</string>
     <string name="download_initiated">Download iniciado. Veja os detalhes na notificação.</string>
     <string name="download_complete">Download concluído</string>
-    <string name="error_download">Erro no download: %s</string>
+    <string name="error_download">Erro no download: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
     <string name="time_remaining">restantes</string>
 
     <string name="cd_cancel_selection">Cancelar seleção</string>
