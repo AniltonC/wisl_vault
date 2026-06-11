@@ -38,6 +38,7 @@
     <string name="notif_channel_name">Downloads</string>
     <string name="download_initiated">Download started. See details in the notification.</string>
     <string name="download_complete">Download complete</string>
+    <string name="upload_complete">Upload complete</string>
     <string name="error_download">Download error: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
     <string name="time_remaining">remaining</string>
 
@@ -47,4 +48,19 @@
     <string name="cd_select_all">Select all</string>
     <string name="cd_send_file">Send file</string>
     <string name="cd_options">Options</string>
+
+    <string name="transfers_title">Transfers</string>
+    <string name="tab_active">Active</string>
+    <string name="tab_completed">Completed</string>
+    <string name="tab_failed">Failed</string>
+    <string name="cd_transfers_button">View transfers</string>
+    <string name="transfer_status_cancelled">Cancelled</string>
+    <string name="transfer_status_failed">Failed</string>
+    <string name="action_select">Select</string>
+    <string name="action_cancel_all">Cancel all transfers</string>
+    <string name="action_clear_all">Clear all transfers</string>
+    <string name="action_delete_selected">Delete selected</string>
+    <string name="no_transfers_active">No active transfers.</string>
+    <string name="no_transfers_completed">No completed transfers.</string>
+    <string name="no_transfers_failed">No failed transfers.</string>
 </resources>

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/ConectionActivity"
-        android:name="com.example.wislvault.ConectionActivity"
+        android:name="com.wislvault.ConectionActivity"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_first">
 
@@ -18,13 +18,23 @@
 
     <fragment
         android:id="@+id/VaultActivity"
-        android:name="com.example.wislvault.VaultActivity"
+        android:name="com.wislvault.VaultActivity"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_second">
 
         <argument
             android:name="serverUrl"
             app:argType="string" />
+
+        <action
+            android:id="@+id/action_VaultActivity_to_TransfersActivity"
+            app:destination="@id/TransfersActivity" />
     </fragment>
+
+    <fragment
+        android:id="@+id/TransfersActivity"
+        android:name="com.wislvault.TransfersActivity"
+        android:label="@string/transfers_title"
+        tools:layout="@layout/activity_transfers" />
 
 </navigation>

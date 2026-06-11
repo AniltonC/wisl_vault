@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Checkbox (visible only in selection mode) -->
+        <CheckBox
+            android:id="@+id/cbSelected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:focusable="false"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- File type icon with direction badge -->
+        <FrameLayout
+            android:id="@+id/fileIconContainer"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/cbSelected"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivFileIcon"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="top|start"
+                android:contentDescription="@null" />
+
+        </FrameLayout>
+
+        <!-- File name -->
+        <TextView
+            android:id="@+id/tvTransferName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/fileIconContainer"
+            app:layout_constraintTop_toTopOf="@id/fileIconContainer" />
+
+        <!-- Progress bar -->
+        <ProgressBar
+            android:id="@+id/transferProgressBar"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="4dp"
+            android:max="100"
+            android:progressTint="?attr/colorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/fileIconContainer"
+            app:layout_constraintTop_toBottomOf="@id/tvTransferName" />
+
+        <!-- Percent -->
+        <TextView
+            android:id="@+id/tvTransferPercent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:layout_marginTop="3dp"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/directionArrowContainer"
+            app:layout_constraintStart_toEndOf="@+id/directionArrowContainer"
+            app:layout_constraintTop_toBottomOf="@id/transferProgressBar" />
+
+        <!-- Bytes transferred -->
+        <TextView
+            android:id="@+id/tvTransferBytes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#64748b"
+            android:textSize="12sp"
+            app:layout_constraintBaseline_toBaselineOf="@id/tvTransferPercent"
+            app:layout_constraintStart_toEndOf="@+id/tvTransferPercent"
+            app:layout_constraintTop_toBottomOf="@id/transferProgressBar" />
+
+        <!-- Speed -->
+
+        <!-- Reason: Cancelled / Failed (gone when ACTIVE or COMPLETED) -->
+
+        <TextView
+            android:id="@+id/tvTransferSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginStart="6dp"
+            android:textColor="#64748b"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@+id/tvTransferBytes"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/tvTransferBytes"
+            app:layout_constraintTop_toTopOf="@+id/tvTransferBytes" />
+
+        <TextView
+            android:id="@+id/tvTransferReason"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp"
+            android:textColor="#dc2626"
+            android:fontFamily="sans-serif-medium"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/directionArrowContainer"
+            app:layout_constraintTop_toBottomOf="@id/tvTransferName" />
+
+        <!-- Completed info: size · date/time (gone when ACTIVE, FAILED, CANCELLED) -->
+        <TextView
+            android:id="@+id/tvTransferCompleted"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
+            android:textColor="#64748b"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/directionArrowContainer"
+            app:layout_constraintTop_toBottomOf="@id/tvTransferName" />
+
+        <FrameLayout
+            android:id="@+id/directionArrowContainer"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginTop="3dp"
+            app:layout_constraintStart_toEndOf="@+id/fileIconContainer"
+            app:layout_constraintTop_toBottomOf="@+id/transferProgressBar">
+
+            <ImageView
+                android:id="@+id/ivArrowUpload"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_arrow_upload"
+                android:contentDescription="@null"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/ivArrowDownload"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_arrow_download"
+                android:contentDescription="@null"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

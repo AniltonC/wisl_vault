@@ -17,7 +17,7 @@
         android:theme="@style/Theme.WiSLVault"
         tools:ignore="RtlEnabled">
         <activity
-            android:name=".MainActivity"
+            android:name="com.wislvault.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.WiSLVault">
             <intent-filter>

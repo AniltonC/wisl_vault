@@ -69,7 +69,6 @@
                         android:imeOptions="actionDone"
                         android:inputType="textUri"
                         android:singleLine="true"
-                        android:text="@string/server_url_hint"
                         android:textSize="15sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>

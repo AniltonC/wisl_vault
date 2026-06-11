@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.wislvault"
+    namespace = "com.wislvault"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.wislvault"
+        applicationId = "com.wislvault"
         minSdk = 35
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
