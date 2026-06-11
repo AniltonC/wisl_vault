@@ -43,7 +43,7 @@ def cleanup_uploads():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    cleanup_uploads()
+    # cleanup_uploads()
     yield
 
 

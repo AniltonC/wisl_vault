@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# NetworkManager dispatcher: restart wisl-vault when a network interface comes up
+# so the mDNS conflict check runs against the new network.
+case "$2" in
+    up)
+        if systemctl is-active --quiet wisl-vault; then
+            systemctl restart wisl-vault
+        fi
+        ;;
+esac

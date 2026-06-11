@@ -1,0 +1,13 @@
+# WiSL Vault — NOPASSWD for automated scripts (start.sh / stop.sh / install.sh)
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/apt-get install -y avahi-daemon
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/avahi/avahi-daemon.conf
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable avahi-daemon
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart avahi-daemon
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop avahi-daemon
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/install -m 0755 * /etc/NetworkManager/dispatcher.d/99-wisl-vault
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/systemd/system/wisl-vault.service
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl daemon-reload
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable wisl-vault.service
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl start wisl-vault
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop wisl-vault
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart wisl-vault

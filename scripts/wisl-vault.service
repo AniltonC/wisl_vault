@@ -1,0 +1,18 @@
+[Unit]
+Description=WiSL Vault local test server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=WISL_USER
+WorkingDirectory=WISL_DIR
+ExecStart=WISL_DIR/scripts/start.sh -d
+ExecStop=WISL_DIR/scripts/stop.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
