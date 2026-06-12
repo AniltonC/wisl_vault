@@ -15,12 +15,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayout
-import com.wislvault.databinding.ActivityTransfersBinding
+import com.wislvault.databinding.FragmentTransfersBinding
 import kotlinx.coroutines.launch
 
-class TransfersActivity : Fragment() {
+class TransfersFragment : Fragment() {
 
-    private var _binding: ActivityTransfersBinding? = null
+    private var _binding: FragmentTransfersBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var adapter: TransferAdapter
@@ -33,7 +33,7 @@ class TransfersActivity : Fragment() {
     private enum class Tab { ACTIVE, COMPLETED, FAILED }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = ActivityTransfersBinding.inflate(inflater, container, false)
+        _binding = FragmentTransfersBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -60,7 +60,7 @@ class TransfersActivity : Fragment() {
                     else -> Tab.FAILED
                 }
                 exitSelectionMode()
-                refreshList(TransferManager.transfers.value)
+                refreshList(transferService?.transfers?.value ?: emptyList())
             }
             override fun onTabUnselected(tab: TabLayout.Tab) = Unit
             override fun onTabReselected(tab: TabLayout.Tab) = Unit
@@ -107,9 +107,7 @@ class TransfersActivity : Fragment() {
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            TransferManager.transfers.collect { transfers ->
-                refreshList(transfers)
-            }
+            transferService?.transfers?.collect { refreshList(it) }
         }
     }
 
@@ -172,19 +170,22 @@ class TransfersActivity : Fragment() {
         adapter.notifyDataSetChanged()
     }
 
+    private val transferService get() =
+        (requireContext().applicationContext as WiSLVaultApp).transferService
+
     private fun manageAll() {
         if (currentTab == Tab.ACTIVE) {
-            currentTabItems.forEach { TransferManager.cancel(it.id) }
+            currentTabItems.forEach { transferService?.cancel(it.id) }
         } else {
-            currentTabItems.forEach { TransferManager.remove(it.id) }
+            currentTabItems.forEach { transferService?.remove(it.id) }
         }
     }
 
     private fun deleteSelected() {
         if (currentTab == Tab.ACTIVE) {
-            selectedIds.toList().forEach { TransferManager.cancel(it) }
+            selectedIds.toList().forEach { transferService?.cancel(it) }
         } else {
-            selectedIds.toList().forEach { TransferManager.remove(it) }
+            selectedIds.toList().forEach { transferService?.remove(it) }
         }
         exitSelectionMode()
     }

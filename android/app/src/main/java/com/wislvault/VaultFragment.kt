@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -26,7 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.wislvault.R
-import com.wislvault.databinding.FragmentSecondBinding
+import com.wislvault.databinding.FragmentVaultBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,11 +38,10 @@ import java.net.URL
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicInteger
 
-class VaultActivity : Fragment() {
+class VaultFragment : Fragment() {
 
-    private var _binding: FragmentSecondBinding? = null
+    private var _binding: FragmentVaultBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var serverUrl: String
@@ -64,14 +64,12 @@ class VaultActivity : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentSecondBinding.inflate(inflater, container, false)
+        _binding = FragmentVaultBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        TransferManager.init(requireContext())
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
@@ -100,14 +98,13 @@ class VaultActivity : Fragment() {
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 if (menuItem.itemId == R.id.action_transfers) {
-                    findNavController().navigate(R.id.action_VaultActivity_to_TransfersActivity)
+                    findNavController().navigate(R.id.action_VaultFragment_to_TransfersFragment)
                     return true
                 }
                 return false
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        ensureNotifChannel()
         ensureNotifPermission()
         fetchFiles()
     }
@@ -118,18 +115,6 @@ class VaultActivity : Fragment() {
     }
 
     // ── Notifications ─────────────────────────────────────────────────────────
-
-    private fun ensureNotifChannel() {
-        val nm = requireContext().getSystemService(android.app.NotificationManager::class.java)
-        if (nm.getNotificationChannel(NOTIF_CHANNEL_ID) == null) {
-            val channel = android.app.NotificationChannel(
-                NOTIF_CHANNEL_ID,
-                getString(R.string.notif_channel_name),
-                android.app.NotificationManager.IMPORTANCE_LOW
-            )
-            nm.createNotificationChannel(channel)
-        }
-    }
 
     private fun ensureNotifPermission() {
         if (ContextCompat.checkSelfPermission(
@@ -206,9 +191,12 @@ class VaultActivity : Fragment() {
         }
     }
 
+    private val transferService get() =
+        (requireContext().applicationContext as WiSLVaultApp).transferService
+
     private fun startUpload(uri: Uri) {
-        TransferManager.startUpload(uri, serverUrl, requireContext().applicationContext)
-        findNavController().navigate(R.id.action_VaultActivity_to_TransfersActivity)
+        transferService?.startUpload(uri, serverUrl)
+        findNavController().navigate(R.id.action_VaultFragment_to_TransfersFragment)
     }
 
     private fun deleteFile(file: FileInfo) {
@@ -257,15 +245,15 @@ class VaultActivity : Fragment() {
     // ── Download ──────────────────────────────────────────────────────────────
 
     private fun downloadFile(file: FileInfo) {
-        TransferManager.startDownload(file, serverUrl, requireContext().applicationContext)
-        findNavController().navigate(R.id.action_VaultActivity_to_TransfersActivity)
+        transferService?.startDownload(file, serverUrl)
+        findNavController().navigate(R.id.action_VaultFragment_to_TransfersFragment)
     }
 
     private fun downloadSelected() {
         val toDownload = selectedFiles.mapNotNull { name -> currentFiles.find { it.name == name } }
         exitSelectionMode()
-        toDownload.forEach { TransferManager.startDownload(it, serverUrl, requireContext().applicationContext) }
-        findNavController().navigate(R.id.action_VaultActivity_to_TransfersActivity)
+        toDownload.forEach { transferService?.startDownload(it, serverUrl) }
+        findNavController().navigate(R.id.action_VaultFragment_to_TransfersFragment)
     }
 
     // ── Options menu ─────────────────────────────────────────────────────────
@@ -294,7 +282,7 @@ class VaultActivity : Fragment() {
         }.getOrElse { file.modified }
 
         val msg = "${getString(R.string.info_name)}: ${file.name}\n${getString(R.string.info_type)}: $ext\n${getString(
-            R.string.info_size)}: ${TransferManager.formatSize(file.size)}\n${getString(R.string.info_date)}: $date"
+            R.string.info_size)}: ${TransferService.formatSize(file.size)}\n${getString(R.string.info_date)}: $date"
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.dialog_info_title)
             .setMessage(msg)
@@ -351,7 +339,16 @@ class VaultActivity : Fragment() {
             val item = layoutInflater.inflate(R.layout.item_file, binding.listContainer, false)
             item.tag = file.name
             item.findViewById<TextView>(R.id.tvItemName).text = file.name
-            item.findViewById<TextView>(R.id.tvItemSize).text = TransferManager.formatSize(file.size)
+            item.findViewById<TextView>(R.id.tvItemSize).text = TransferService.formatSize(file.size)
+
+            val ext = file.name.substringAfterLast('.', "").lowercase()
+            val fileIconRes = when (ext) {
+                "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "heic", "heif" -> R.drawable.ic_file_image
+                "mp4", "mkv", "avi", "mov", "wmv", "webm", "flv", "m4v", "3gp"   -> R.drawable.ic_file_video
+                "mp3", "wav", "flac", "aac", "ogg", "m4a", "wma", "opus"          -> R.drawable.ic_file_audio
+                else -> R.drawable.ic_file_generic
+            }
+            item.findViewById<ImageView>(R.id.ivFileIcon).setImageResource(fileIconRes)
 
             val btn = item.findViewById<ImageButton>(R.id.btnOptions)
             val iconRes = when {
@@ -383,8 +380,4 @@ class VaultActivity : Fragment() {
 
     data class FileInfo(val name: String, val size: Long, val modified: String)
 
-    companion object {
-        private const val NOTIF_CHANNEL_ID = "wisl_downloads"
-        private val notifIdCounter = AtomicInteger(1000)
-    }
 }

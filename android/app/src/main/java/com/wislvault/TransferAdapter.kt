@@ -53,12 +53,10 @@ class TransferAdapter(
             else 0
             b.transferProgressBar.progress = pct
             b.tvTransferPercent.text = "$pct%"
-            val transferred = TransferManager.formatSize(item.bytesTransferred)
-            val total = if (item.fileSize > 0) TransferManager.formatSize(item.fileSize) else "?"
-            b.tvTransferBytes.text = "$transferred de $total"
-            b.tvTransferSpeed.text = if (item.speed > 0)
-                "${TransferManager.formatSize(item.speed.toLong())}/s"
-            else ""
+            val transferred = TransferService.formatSize(item.bytesTransferred)
+            val total = if (item.fileSize > 0) TransferService.formatSize(item.fileSize) else "?"
+            b.tvTransferBytes.text = b.root.context.getString(R.string.transfer_bytes_progress, transferred, total)
+            b.tvTransferSpeed.text = buildSpeedEta(item)
         }
 
         private fun bindActive(item: TransferItem) {
@@ -69,13 +67,11 @@ class TransferAdapter(
             b.transferProgressBar.progress = pct
             b.tvTransferPercent.text = "$pct%"
 
-            val transferred = TransferManager.formatSize(item.bytesTransferred)
-            val total = if (item.fileSize > 0) TransferManager.formatSize(item.fileSize) else "?"
-            b.tvTransferBytes.text = "$transferred de $total"
+            val transferred = TransferService.formatSize(item.bytesTransferred)
+            val total = if (item.fileSize > 0) TransferService.formatSize(item.fileSize) else "?"
+            b.tvTransferBytes.text = b.root.context.getString(R.string.transfer_bytes_progress, transferred, total)
 
-            b.tvTransferSpeed.text = if (item.speed > 0)
-                "${TransferManager.formatSize(item.speed.toLong())}/s"
-            else ""
+            b.tvTransferSpeed.text = buildSpeedEta(item)
 
             b.transferProgressBar.isVisible = true
             b.tvTransferPercent.isVisible = true
@@ -86,9 +82,9 @@ class TransferAdapter(
         }
 
         private fun bindCompleted(item: TransferItem) {
-            val size = TransferManager.formatSize(item.fileSize)
+            val size = TransferService.formatSize(item.fileSize)
             val date = item.completedAt?.let {
-                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("pt", "BR")).format(Date(it))
+                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-BR")).format(Date(it))
             } ?: ""
             b.tvTransferCompleted.text = if (date.isNotEmpty()) "$size · $date" else size
 
@@ -109,6 +105,21 @@ class TransferAdapter(
             b.tvTransferSpeed.isVisible = false
             b.tvTransferReason.isVisible = true
             b.tvTransferCompleted.isVisible = false
+        }
+
+        private fun buildSpeedEta(item: TransferItem): String {
+            if (item.speed <= 0) return ""
+            val speedStr = "${TransferService.formatSize(item.speed.toLong())}/s"
+            val remaining = item.fileSize - item.bytesTransferred
+            if (item.fileSize <= 0 || remaining <= 0) return speedStr
+            val etaSecs = (remaining / item.speed).toLong()
+            return "$speedStr · ${formatEta(etaSecs)}"
+        }
+
+        private fun formatEta(seconds: Long): String = when {
+            seconds < 60   -> "${seconds}s"
+            seconds < 3600 -> "${seconds / 60}min"
+            else           -> "${seconds / 3600}h ${(seconds % 3600) / 60}min"
         }
     }
 

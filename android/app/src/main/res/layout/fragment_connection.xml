@@ -33,10 +33,36 @@
             android:textColor="#94a3b8"
             android:layout_marginBottom="40dp" />
 
-        <!-- Card de conexão -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Seção de carregamento (visível durante auto-conexão) -->
+        <LinearLayout
+            android:id="@+id/sectionLoading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="32dp"
+            android:paddingBottom="32dp">
+
+            <ProgressBar
+                android:layout_width="64dp"
+                android:layout_height="64dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/connecting_auto"
+                android:textColor="#64748b"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- Card de conexão (oculto até a auto-conexão falhar) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             app:cardElevation="2dp"
             app:cardCornerRadius="16dp"
             android:layout_marginBottom="16dp">
@@ -81,7 +107,7 @@
                     android:textSize="15sp"
                     android:paddingVertical="12dp" />
 
-                <!-- Progresso de conexão -->
+                <!-- Progresso de conexão manual -->
                 <ProgressBar
                     android:id="@+id/progressConnect"
                     android:layout_width="wrap_content"

@@ -10,6 +10,10 @@
     <string name="btn_connect">Connect</string>
     <string name="btn_delete">Delete</string>
 
+    <string name="transfer_bytes_progress">%1$s of %2$s</string>
+    <string name="notif_transfer_foreground">Transferring %d file(s)…</string>
+    <string name="connecting_auto">Connecting to wislvault.local…</string>
+    <string name="error_wislvault_unavailable">Could not connect to wislvault.local</string>
     <string name="error_connect">Could not connect: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>
     <string name="no_files">No files on the server.</string>
     <string name="error_list_files">Error listing files: <xliff:g id="error_message" example="Connection refused">%s</xliff:g></string>

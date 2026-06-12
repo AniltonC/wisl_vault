@@ -10,20 +10,20 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.wislvault.R
-import com.wislvault.databinding.FragmentFirstBinding
+import com.wislvault.databinding.FragmentConnectionBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 
-class ConectionActivity : Fragment() {
+class ConnectionFragment : Fragment() {
 
-    private var _binding: FragmentFirstBinding? = null
+    private var _binding: FragmentConnectionBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentFirstBinding.inflate(inflater, container, false)
+        _binding = FragmentConnectionBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -31,11 +31,34 @@ class ConectionActivity : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.btnConnect.setOnClickListener { connect() }
         binding.editServerUrl.setOnEditorActionListener { _, _, _ -> connect(); true }
+        autoConnect()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun autoConnect() {
+        binding.sectionLoading.isVisible = true
+        binding.cardConnect.isVisible = false
+        binding.tvError.isVisible = false
+
+        lifecycleScope.launch {
+            val success = tryConnect(DEFAULT_URL)
+            if (_binding == null) return@launch
+            if (success) {
+                findNavController().navigate(
+                    R.id.action_ConnectionFragment_to_VaultFragment,
+                    bundleOf("serverUrl" to DEFAULT_URL)
+                )
+            } else {
+                binding.sectionLoading.isVisible = false
+                binding.cardConnect.isVisible = true
+                binding.tvError.text = getString(R.string.error_wislvault_unavailable)
+                binding.tvError.isVisible = true
+            }
+        }
     }
 
     private fun connect() {
@@ -56,7 +79,7 @@ class ConectionActivity : Fragment() {
                     if (code != 200) throw Exception("HTTP $code")
                 }
                 findNavController().navigate(
-                    R.id.action_ConectionActivity_to_VaultActivity,
+                    R.id.action_ConnectionFragment_to_VaultFragment,
                     bundleOf("serverUrl" to url)
                 )
             } catch (e: Exception) {
@@ -69,5 +92,20 @@ class ConectionActivity : Fragment() {
                 }
             }
         }
+    }
+
+    private suspend fun tryConnect(url: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val conn = URL("$url/files").openConnection() as HttpURLConnection
+            conn.connectTimeout = 8_000
+            conn.readTimeout = 8_000
+            conn.responseCode == 200
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    companion object {
+        private const val DEFAULT_URL = "http://wislvault.local/api"
     }
 }
